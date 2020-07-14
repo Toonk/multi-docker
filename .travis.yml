@@ -1,0 +1,22 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t toonk/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run toonk/react-test npm test -- --coverage
+
+after_success:
+  - docker build -t toonk/multi-client ./client
+  - docker build -t toonk/multi-nginx ./nginx
+  - docker build -t toonk/multi-server ./server
+  - docker build -t toonk/multi-worker ./worker
+  # Log in to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push them to docker hub
+  - docker push toonk/multi-client
+  - docker push toonk/multi-nginx
+  - docker push toonk/multi-server
+  - docker push toonk/multi-worker
